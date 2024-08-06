@@ -10,9 +10,13 @@ class BetterPlayerPlaylistConfiguration {
   ///elements in data source list. Default is 0.
   final int initialStartIndex;
 
+  ///Flag that determines whenever player should keep full screen mode between videos
+  final bool keepFullScreen;
+
   const BetterPlayerPlaylistConfiguration({
     this.nextVideoDelay = const Duration(milliseconds: 3000),
     this.loopVideos = true,
     this.initialStartIndex = 0,
+    this.keepFullScreen = false,
   });
 }

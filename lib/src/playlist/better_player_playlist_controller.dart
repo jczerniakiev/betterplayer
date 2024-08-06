@@ -76,7 +76,7 @@ class BetterPlayerPlaylistController {
     if (nextDataSourceId == -1) {
       return;
     }
-    if (_betterPlayerController!.isFullScreen) {
+    if (_betterPlayerController!.isFullScreen && !betterPlayerPlaylistConfiguration.keepFullScreen) {
       _betterPlayerController!.exitFullScreen();
     }
     _changingToNextVideo = true;
