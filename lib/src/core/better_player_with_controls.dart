@@ -92,6 +92,8 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
 
     aspectRatio ??= 16 / 9;
     final innerContainer = Container(
+      // quick hack to stretch vertical video
+      height: aspectRatio < 1 ? double.infinity : null,
       width: double.infinity,
       color: betterPlayerController
           .betterPlayerConfiguration.controlsConfiguration.backgroundColor,
