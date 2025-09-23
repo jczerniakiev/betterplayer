@@ -455,9 +455,14 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
         if (!onlyAudio && height == CGSizeZero.height && width == CGSizeZero.width) {
             return;
         }
-        const BOOL isLive = CMTIME_IS_INDEFINITE([_player currentItem].duration);
+        CMTime assetDuration = [[[_player currentItem] asset] duration];
+        const BOOL isLive = CMTIME_IS_INDEFINITE(assetDuration);
         // The player may be initialized but still needs to determine the duration.
         if (isLive == false && [self duration] == 0) {
+            // Retry shortly to allow duration to be loaded
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self onReadyToPlay];
+            });
             return;
         }
 
