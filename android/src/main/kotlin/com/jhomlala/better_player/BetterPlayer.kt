@@ -75,6 +75,7 @@ import androidx.media3.exoplayer.source.ClippingMediaSource
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import android.media.session.MediaSession
 
 internal class BetterPlayer(
     context: Context,
@@ -327,8 +328,11 @@ internal class BetterPlayer(
                 setUseStopAction(false)
             }
 
-            setupMediaSession(context)?.let {
-                setMediaSessionToken(it.sessionToken)
+            setupMediaSession(context)?.let { mediaSessionCompat ->
+                val frameworkToken = mediaSessionCompat.sessionToken.token
+                if (frameworkToken is MediaSession.Token) {
+                    setMediaSessionToken(frameworkToken)
+                }
             }
         }
 
@@ -523,20 +527,18 @@ internal class BetterPlayer(
         }
     }
 
-    @Suppress("DEPRECATION")
     private fun setAudioAttributes(exoPlayer: ExoPlayer?, mixWithOthers: Boolean) {
-        val audioComponent = exoPlayer?.audioComponent ?: return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            audioComponent.setAudioAttributes(
-                AudioAttributes.Builder().setContentType(C.CONTENT_TYPE_MOVIE).build(),
-                !mixWithOthers
-            )
-        } else {
-            audioComponent.setAudioAttributes(
-                AudioAttributes.Builder().setContentType(C.CONTENT_TYPE_MUSIC).build(),
-                !mixWithOthers
-            )
-        }
+        exoPlayer ?: return
+        val contentType =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                C.CONTENT_TYPE_MOVIE
+            } else {
+                C.CONTENT_TYPE_MUSIC
+            }
+        val attributes = AudioAttributes.Builder()
+            .setContentType(contentType)
+            .build()
+        exoPlayer.setAudioAttributes(attributes, !mixWithOthers)
     }
 
     fun play() {
