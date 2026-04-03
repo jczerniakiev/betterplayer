@@ -26,6 +26,7 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.view.TextureRegistry
 import java.lang.Exception
 import java.util.HashMap
+import android.util.Rational
 
 /**
  * Android platform implementation of the VideoPlayerPlugin.
