@@ -51,17 +51,18 @@ class _PlaylistPageState extends State<PlaylistPage> {
     _dataSourceList.add(
       BetterPlayerDataSource(
         BetterPlayerDataSourceType.network,
-        Constants.bugBuckBunnyVideoUrl,
+        Constants.hls1VideoUrl,
         placeholder: Image.network(
           Constants.catImageUrl,
           fit: BoxFit.cover,
         ),
       ),
     );
+
     _dataSourceList.add(
       BetterPlayerDataSource(
         BetterPlayerDataSourceType.network,
-        Constants.forBiggerJoyridesVideoUrl,
+        Constants.hls2VideoUrl,
       ),
     );
 
