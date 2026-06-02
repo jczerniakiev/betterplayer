@@ -23,7 +23,8 @@ if (flutterVersionName == null) {
 }
 
 android {
-    compileSdkVersion 35
+    compileSdkVersion 36
+    ndkVersion = "28.2.13676358"
     namespace "com.jhomlala.better_player_example"
 
     sourceSets {
