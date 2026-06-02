@@ -14,17 +14,17 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.5
-  wakelock_plus: ^1.0.0+3
-  meta: ^1.15.0
+  cupertino_icons: ^1.0.9
+  wakelock_plus: ^1.6.1
+  meta: ^1.18.0
   flutter_widget_from_html_core: ^0.15.2
   visibility_detector: ^0.4.0+2
-  path_provider: ^2.0.10
-  collection: ^1.19.0
-  xml: ^6.1.0
+  path_provider: ^2.1.5
+  collection: ^1.19.1
+  xml: ^6.6.1
 
 dev_dependencies:
-  lint: ^2.3.0
+  lint: ^2.8.0
   flutter_test:
     sdk: flutter
   flutter_localizations:
