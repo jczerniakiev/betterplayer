@@ -1,8 +1,8 @@
 class Constants {
   static const String bugBuckBunnyVideoUrl =
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-  static const String forBiggerBlazesUrl =
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
+  static const String mp4Url =
+      "https://player.vimeo.com/progressive_redirect/playback/626450638/rendition/720p/file.mp4?loc=external&oauth2_token_id=1364341156&signature=4edba566297da345047e951a0342da5b97551318d6320c705edd540163922c8c";
   static const String fileTestVideoUrl = "testvideo.mp4";
   static const String fileTestVideoEncryptUrl = "testvideo_encrypt.mp4";
   static const String networkTestVideoEncryptUrl =

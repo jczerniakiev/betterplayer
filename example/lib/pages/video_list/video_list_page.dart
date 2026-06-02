@@ -15,7 +15,7 @@ class _VideoListPageState extends State<VideoListPage> {
   final _random = new Random();
   final List<String> _videos = [
     Constants.bugBuckBunnyVideoUrl,
-    Constants.forBiggerBlazesUrl,
+    Constants.mp4Url,
     Constants.forBiggerJoyridesVideoUrl,
     Constants.elephantDreamVideoUrl,
   ];

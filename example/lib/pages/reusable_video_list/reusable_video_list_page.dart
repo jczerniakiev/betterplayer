@@ -16,7 +16,7 @@ class _ReusableVideoListPageState extends State<ReusableVideoListPage> {
       ReusableVideoListController();
   final _random = new Random();
   final List<String> _videos = [
-    Constants.forBiggerBlazesUrl,
+    Constants.mp4Url,
     Constants.forBiggerJoyridesVideoUrl,
   ];
   List<VideoListData> dataList = [];

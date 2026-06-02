@@ -37,7 +37,7 @@ class _PlaylistPageState extends State<PlaylistPage> {
   Future<List<BetterPlayerDataSource>> setupData() async {
     _dataSourceList.add(
       BetterPlayerDataSource(
-          BetterPlayerDataSourceType.network, Constants.forBiggerBlazesUrl,
+          BetterPlayerDataSourceType.network, Constants.mp4Url,
           subtitles: BetterPlayerSubtitlesSource.single(
             type: BetterPlayerSubtitlesSourceType.file,
             url: await Utils.getFileUrl(Constants.fileExampleSubtitlesUrl),
