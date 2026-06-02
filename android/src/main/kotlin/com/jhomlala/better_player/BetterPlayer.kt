@@ -11,8 +11,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import com.jhomlala.better_player.DataSourceUtils.getUserAgent
 import com.jhomlala.better_player.DataSourceUtils.isHTTP
 import com.jhomlala.better_player.DataSourceUtils.getDataSourceFactory
@@ -26,7 +24,6 @@ import android.util.Log
 import android.view.Surface
 import androidx.lifecycle.Observer
 import io.flutter.plugin.common.EventChannel.EventSink
-import androidx.media.session.MediaButtonReceiver
 import androidx.work.Data
 import androidx.media3.ui.PlayerNotificationManager
 import androidx.media3.ui.PlayerNotificationManager.MediaDescriptionAdapter
@@ -36,16 +33,16 @@ import java.io.File
 import java.lang.Exception
 import java.lang.IllegalStateException
 import java.util.*
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
-import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
 import androidx.media3.*
+import androidx.media3.session.MediaSession
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
@@ -75,7 +72,6 @@ import androidx.media3.exoplayer.source.ClippingMediaSource
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
-import android.media.session.MediaSession
 
 internal class BetterPlayer(
     context: Context,
@@ -92,17 +88,19 @@ internal class BetterPlayer(
     private var surface: Surface? = null
     private var key: String? = null
     private var playerNotificationManager: PlayerNotificationManager? = null
-    private var refreshHandler: Handler? = null
-    private var refreshRunnable: Runnable? = null
-    private var exoPlayerEventListener: Player.Listener? = null
     private var bitmap: Bitmap? = null
-    private var mediaSession: MediaSessionCompat? = null
+    private var mediaSession: MediaSession? = null
     private var drmSessionManager: DrmSessionManager? = null
     private val workManager: WorkManager
     private val workerObserverMap: HashMap<UUID, Observer<WorkInfo?>>
     private val customDefaultLoadControl: CustomDefaultLoadControl =
         customDefaultLoadControl ?: CustomDefaultLoadControl()
     private var lastSendBufferedPosition = 0L
+
+    // Target of the most recent app-initiated seek (via [seekTo]). Used to
+    // suppress the "seek" event echo for seeks Dart already drove, so only
+    // external controller seeks are forwarded back. C.TIME_UNSET = none pending.
+    private var pendingSeekPositionMs = C.TIME_UNSET
 
     init {
         val loadBuilder = DefaultLoadControl.Builder()
@@ -318,58 +316,14 @@ internal class BetterPlayer(
                 setUseStopAction(false)
             }
 
-            setupMediaSession(context)?.let { mediaSessionCompat ->
-                val frameworkToken = mediaSessionCompat.sessionToken.token
-                if (frameworkToken is MediaSession.Token) {
-                    setMediaSessionToken(frameworkToken)
-                }
+            setupMediaSession(context, title, author, imageUrl)?.let { session ->
+                setMediaSessionToken(session.platformToken)
             }
         }
-
-        refreshHandler = Handler(Looper.getMainLooper())
-        refreshRunnable = Runnable {
-            val playbackState: PlaybackStateCompat = if (exoPlayer?.isPlaying == true) {
-                PlaybackStateCompat.Builder()
-                    .setActions(PlaybackStateCompat.ACTION_SEEK_TO)
-                    .setState(PlaybackStateCompat.STATE_PLAYING, position, 1.0f)
-                    .build()
-            } else {
-                PlaybackStateCompat.Builder()
-                    .setActions(PlaybackStateCompat.ACTION_SEEK_TO)
-                    .setState(PlaybackStateCompat.STATE_PAUSED, position, 1.0f)
-                    .build()
-            }
-            mediaSession?.setPlaybackState(playbackState)
-            refreshHandler?.postDelayed(refreshRunnable!!, 1000)
-        }
-        refreshHandler?.postDelayed(refreshRunnable!!, 0)
-        exoPlayerEventListener = object : Player.Listener {
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                mediaSession?.setMetadata(
-                    MediaMetadataCompat.Builder()
-                        .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, getDuration())
-                        .build()
-                )
-            }
-        }
-        exoPlayerEventListener?.let { exoPlayerEventListener ->
-            exoPlayer?.addListener(exoPlayerEventListener)
-        }
-        exoPlayer?.seekTo(0)
     }
 
     fun disposeRemoteNotifications() {
-        exoPlayerEventListener?.let { exoPlayerEventListener ->
-            exoPlayer?.removeListener(exoPlayerEventListener)
-        }
-        if (refreshHandler != null) {
-            refreshHandler?.removeCallbacksAndMessages(null)
-            refreshHandler = null
-            refreshRunnable = null
-        }
-        if (playerNotificationManager != null) {
-            playerNotificationManager?.setPlayer(null)
-        }
+        playerNotificationManager?.setPlayer(null)
         bitmap = null
     }
 
@@ -493,6 +447,31 @@ internal class BetterPlayer(
                 }
             }
 
+            override fun onPositionDiscontinuity(
+                oldPosition: Player.PositionInfo,
+                newPosition: Player.PositionInfo,
+                reason: Int
+            ) {
+                if (reason == Player.DISCONTINUITY_REASON_SEEK) {
+                    // Suppress the echo for app-initiated seeks (routed through
+                    // [seekTo]): Dart already drove the seek, and re-emitting it
+                    // would bounce a redundant seekTo back through the platform
+                    // channel. Only forward seeks from external controllers
+                    // (lock screen / notification) so Dart can sync its position.
+                    val requested = pendingSeekPositionMs
+                    pendingSeekPositionMs = C.TIME_UNSET
+                    if (requested != C.TIME_UNSET &&
+                        abs(newPosition.positionMs - requested) <= SEEK_EVENT_TOLERANCE_MS
+                    ) {
+                        return
+                    }
+                    val event: MutableMap<String, Any> = HashMap()
+                    event["event"] = "seek"
+                    event["position"] = newPosition.positionMs
+                    eventSink.success(event)
+                }
+            }
+
             override fun onPlayerError(error: PlaybackException) {
                 eventSink.error("VideoError", "Video player had error $error", "")
             }
@@ -563,6 +542,7 @@ internal class BetterPlayer(
     }
 
     fun seekTo(location: Int) {
+        pendingSeekPositionMs = location.toLong()
         exoPlayer?.seekTo(location.toLong())
     }
 
@@ -610,36 +590,46 @@ internal class BetterPlayer(
 
     /**
      * Create media session which will be used in notifications, pip mode.
+     * media3 wires playback state and controller commands to the player
+     * automatically; metadata is supplied via a [ForwardingPlayer] so system
+     * media controls (Android 13+) show the title/author/artwork.
      *
-     * @param context                - android context
-     * @return - configured MediaSession instance
+     * @param context  - android context
+     * @param title    - track title shown by media controls
+     * @param author   - track author/artist shown by media controls
+     * @param imageUrl - optional artwork URI
+     * @return configured [MediaSession], or null when no player is available
      */
-    @SuppressLint("InlinedApi")
-    fun setupMediaSession(context: Context?): MediaSessionCompat? {
+    fun setupMediaSession(
+        context: Context?,
+        title: String? = null,
+        author: String? = null,
+        imageUrl: String? = null
+    ): MediaSession? {
         mediaSession?.release()
-        context?.let {
+        mediaSession = null
+        if (context == null || exoPlayer == null) return null
 
-            val mediaButtonIntent = Intent(Intent.ACTION_MEDIA_BUTTON)
-            val pendingIntent = PendingIntent.getBroadcast(
-                context,
-                0, mediaButtonIntent,
-                PendingIntent.FLAG_IMMUTABLE
-            )
-            val mediaSession = MediaSessionCompat(context, TAG, null, pendingIntent)
-            mediaSession.setCallback(object : MediaSessionCompat.Callback() {
-                override fun onSeekTo(pos: Long) {
-                    sendSeekToEvent(pos)
-                    super.onSeekTo(pos)
-                }
-            })
-            mediaSession.isActive = true
-//            val mediaSessionConnector = MediaSessionConnector(mediaSession)
-//            mediaSessionConnector.setPlayer(exoPlayer)
-            this.mediaSession = mediaSession
-            return mediaSession
+        val metadata = MediaMetadata.Builder()
+            .setTitle(title)
+            .setArtist(author)
+            .apply { if (!imageUrl.isNullOrEmpty()) setArtworkUri(Uri.parse(imageUrl)) }
+            .build()
+        // MediaItems are built from custom MediaSources (DRM/cache/clipping)
+        // without metadata, and replacing the item would drop that custom source
+        // config. Expose metadata through a lightweight wrapper instead — media3
+        // reads it from the player to populate the platform session.
+        val sessionPlayer = object : ForwardingPlayer(exoPlayer) {
+            override fun getMediaMetadata(): MediaMetadata = metadata
         }
-        return null
 
+        // A unique id is required: media3 throws when two sessions share an id,
+        // which happens with multiple simultaneous players (playlist / ListView).
+        val session = MediaSession.Builder(context, sessionPlayer)
+            .setId("BetterPlayer_${textureEntry.id()}")
+            .build()
+        mediaSession = session
+        return session
     }
 
     fun onPictureInPictureStatusChanged(inPip: Boolean) {
@@ -723,14 +713,6 @@ internal class BetterPlayer(
         }
     }
 
-    private fun sendSeekToEvent(positionMs: Long) {
-        exoPlayer?.seekTo(positionMs)
-        val event: MutableMap<String, Any> = HashMap()
-        event["event"] = "seek"
-        event["position"] = positionMs
-        eventSink.success(event)
-    }
-
     fun setMixWithOthers(mixWithOthers: Boolean) {
         setAudioAttributes(exoPlayer, mixWithOthers)
     }
@@ -769,6 +751,11 @@ internal class BetterPlayer(
         private const val FORMAT_OTHER = "other"
         private const val DEFAULT_NOTIFICATION_CHANNEL = "BETTER_PLAYER_NOTIFICATION"
         private const val NOTIFICATION_ID = 20772077
+
+        // Max gap (ms) between an app-requested seek and the resulting player
+        // position for the two to be treated as the same seek when deciding
+        // whether to suppress the "seek" event echo.
+        private const val SEEK_EVENT_TOLERANCE_MS = 1000L
 
         //Clear cache without accessing BetterPlayerCache.
         fun clearCache(context: Context?, result: MethodChannel.Result) {
