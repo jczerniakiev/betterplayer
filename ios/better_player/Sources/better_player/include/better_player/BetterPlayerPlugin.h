@@ -7,8 +7,8 @@
 #import <AVKit/AVKit.h>
 #import <AVFoundation/AVFoundation.h>
 #import <GLKit/GLKit.h>
-#import "BetterPlayerTimeUtils.h"
-#import "BetterPlayer.h"
+#import <better_player/BetterPlayerTimeUtils.h>
+#import <better_player/BetterPlayer.h>
 #import <MediaPlayer/MediaPlayer.h>
 
 @interface BetterPlayerPlugin : NSObject <FlutterPlugin, FlutterPlatformViewFactory>
