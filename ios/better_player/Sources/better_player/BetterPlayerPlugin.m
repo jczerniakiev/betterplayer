@@ -2,8 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#import "BetterPlayerPlugin.h"
+#import <better_player/BetterPlayerPlugin.h>
+#if SWIFT_PACKAGE
+@import better_player_cache;
+#else
 #import <better_player/better_player-Swift.h>
+#endif
 
 #if !__has_feature(objc_arc)
 #error Code Requires ARC.

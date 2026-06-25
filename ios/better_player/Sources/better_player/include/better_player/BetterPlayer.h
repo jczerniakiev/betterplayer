@@ -7,9 +7,9 @@
 #import <AVKit/AVKit.h>
 #import <AVFoundation/AVFoundation.h>
 #import <GLKit/GLKit.h>
-#import "BetterPlayerTimeUtils.h"
-#import "BetterPlayerView.h"
-#import "BetterPlayerEzDrmAssetsLoaderDelegate.h"
+#import <better_player/BetterPlayerTimeUtils.h>
+#import <better_player/BetterPlayerView.h>
+#import <better_player/BetterPlayerEzDrmAssetsLoaderDelegate.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

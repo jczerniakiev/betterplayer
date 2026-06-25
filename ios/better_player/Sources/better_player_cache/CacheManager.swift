@@ -1,7 +1,10 @@
 import AVKit
 import Cache
-import HLSCachingReverseProxyServer
+#if SWIFT_PACKAGE
+import ReadiumGCDWebServer
+#else
 import GCDWebServer
+#endif
 import PINCache
 
 @objc public class CacheManager: NSObject {

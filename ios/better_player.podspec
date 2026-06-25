@@ -12,12 +12,13 @@ A new flutter plugin project.
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'Your Company' => 'email@example.com' }
   s.source           = { :path => '.' }
-  s.source_files = 'Classes/**/*'
-  s.public_header_files = 'Classes/**/*.h'
+  s.source_files = 'better_player/Sources/better_player/**/*.{h,m}', 'better_player/Sources/better_player_cache/**/*.swift'
+  s.public_header_files = 'better_player/Sources/better_player/include/**/*.h'
   s.dependency 'Flutter'
   s.dependency 'Cache', '~> 6.0.0'
   s.dependency 'GCDWebServer'
-  s.dependency 'HLSCachingReverseProxyServer'
+  # HLSCachingReverseProxyServer is vendored into Sources/better_player_cache
+  # (its upstream SPM manifest is broken), so it is no longer a pod dependency.
   s.dependency 'PINCache'
   
   s.platform = :ios, '11.0'
