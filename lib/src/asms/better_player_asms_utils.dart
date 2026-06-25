@@ -56,4 +56,31 @@ class BetterPlayerAsmsUtils {
       return null;
     }
   }
+
+  static Future<List<String?>> getDataFromUrlWithFinalUrl(
+    String url, [
+    Map<String, String?>? headers,
+  ]) async {
+    try {
+      final request = await _httpClient.getUrl(Uri.parse(url));
+      if (headers != null) {
+        headers.forEach((name, value) => request.headers.add(name, value!));
+      }
+
+      final response = await request.close();
+      final String finalUrl = response.redirects.isNotEmpty
+          ? response.redirects.last.location.toString()
+          : url;
+
+      var data = "";
+      await response.transform(const Utf8Decoder()).listen((content) {
+        data += content.toString();
+      }).asFuture<String?>();
+
+      return [data, finalUrl];
+    } catch (exception) {
+      BetterPlayerUtils.log("GetDataFromUrlWithFinalUrl failed: $exception");
+      return [null, url];
+    }
+  }
 }

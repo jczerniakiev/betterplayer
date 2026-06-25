@@ -300,13 +300,18 @@ class BetterPlayerController {
   ///This method configures tracks, subtitles and audio tracks from given
   ///master playlist.
   Future _setupAsmsDataSource(BetterPlayerDataSource source) async {
-    final String? data = await BetterPlayerAsmsUtils.getDataFromUrl(
+    final List<String?> fetchResult =
+        await BetterPlayerAsmsUtils.getDataFromUrlWithFinalUrl(
       betterPlayerDataSource!.url,
       _getHeaders(),
     );
+
+    final String? data = fetchResult[0];
+    final String parseUrl = fetchResult[1] ?? betterPlayerDataSource!.url;
+
     if (data != null) {
       final BetterPlayerAsmsDataHolder _response =
-          await BetterPlayerAsmsUtils.parse(data, betterPlayerDataSource!.url);
+          await BetterPlayerAsmsUtils.parse(data, parseUrl);
 
       /// Load tracks
       if (_betterPlayerDataSource?.useAsmsTracks == true) {

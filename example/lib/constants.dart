@@ -1,4 +1,6 @@
 class Constants {
+  static const String hlsWithSubtitles =
+      'https://player.vimeo.com/external/1204122133.m3u8?s=efc16668064014d98c064f87a1303a42c28d99b8&logging=false';
   static const String hls1VideoUrl =
       "https://player.vimeo.com/external/626450638.m3u8?s=e444f42155c3f54f96829a21058e4c26ef8ff574&oauth2_token_id=1364341156";
   static const String hls2VideoUrl =

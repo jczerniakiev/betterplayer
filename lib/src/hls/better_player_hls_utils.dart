@@ -107,16 +107,13 @@ class BetterPlayerHlsUtils {
       final bool isSegmented = hlsMediaPlaylist.segments.length > 1;
       int microSecondsFromStart = 0;
       for (final Segment segment in hlsMediaPlaylist.segments) {
-        final split = rendition.url.toString().split("/");
-        var realUrl = "";
-        for (var index = 0; index < split.length - 1; index++) {
-          // ignore: use_string_buffers
-          realUrl += "${split[index]}/";
-        }
+        final String realUrl;
         if (segment.url?.startsWith("http") == true) {
           realUrl = segment.url!;
         } else {
-          realUrl += segment.url!;
+          // RFC 3986 resolution - combining relative URI into final, absolute
+          // url
+          realUrl = rendition.url!.resolve(segment.url!).toString();
         }
         hlsSubtitlesUrls.add(realUrl);
 
