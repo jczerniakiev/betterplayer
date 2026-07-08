@@ -97,6 +97,11 @@ internal class BetterPlayer(
         customDefaultLoadControl ?: CustomDefaultLoadControl()
     private var lastSendBufferedPosition = 0L
 
+    // Optional video size cap (0 = no cap). Applied to the track selector 
+    // before prepare() so oversized renditions are never used. 
+    private var maxVideoWidth = 0
+    private var maxVideoHeight = 0
+
     // Target of the most recent app-initiated seek (via [seekTo]). Used to
     // suppress the "seek" event echo for seeks Dart already drove, so only
     // external controller seeks are forwarded back. C.TIME_UNSET = none pending.
@@ -134,9 +139,13 @@ internal class BetterPlayer(
         licenseUrl: String?,
         drmHeaders: Map<String, String>?,
         cacheKey: String?,
-        clearKey: String?
+        clearKey: String?,
+        maxVideoWidth: Int,
+        maxVideoHeight: Int
     ) {
         this.key = key
+        this.maxVideoWidth = maxVideoWidth
+        this.maxVideoHeight = maxVideoHeight
         isInitialized = false
         val uri = Uri.parse(dataSource)
         var dataSourceFactory: DataSource.Factory?
@@ -196,6 +205,9 @@ internal class BetterPlayer(
         } else {
             exoPlayer?.setMediaSource(mediaSource)
         }
+        // Apply the size cap before prepare() so the first track selection
+        // already excludes oversized renditions.
+        applyMaxVideoSize()
         exoPlayer?.prepare()
         result.success(null)
     }
@@ -535,10 +547,27 @@ internal class BetterPlayer(
             parametersBuilder.setMaxVideoBitrate(bitrate)
         }
         if (width == 0 && height == 0 && bitrate == 0) {
-            parametersBuilder.clearVideoSizeConstraints()
+            // "Reset to auto" — better_player calls this after every data source
+            // setup. Honour the per-data-source cap (if any) instead of fully
+            // clearing constraints, so it survives this reset, playlist item
+            // changes and ABR ramp-ups.
+            if (maxVideoWidth != 0 && maxVideoHeight != 0) {
+                parametersBuilder.setMaxVideoSize(maxVideoWidth, maxVideoHeight)
+            } else {
+                parametersBuilder.clearVideoSizeConstraints()
+            }
             parametersBuilder.setMaxVideoBitrate(Int.MAX_VALUE)
         }
         trackSelector.setParameters(parametersBuilder)
+    }
+
+    /// Applies the [maxVideoWidth] / [maxVideoHeight] cap to the track selector. 
+    private fun applyMaxVideoSize() {
+        if (maxVideoWidth == 0 || maxVideoHeight == 0) return
+        trackSelector.setParameters(
+            trackSelector.buildUponParameters()
+                .setMaxVideoSize(maxVideoWidth, maxVideoHeight)
+        )
     }
 
     fun seekTo(location: Int) {

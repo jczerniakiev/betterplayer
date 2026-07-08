@@ -227,6 +227,8 @@ class DataSource {
     this.activityName,
     this.clearKey,
     this.videoExtension,
+    this.maxVideoWidth,
+    this.maxVideoHeight,
   }) : assert(uri == null || asset == null);
 
   /// Describes the type of data source this [VideoPlayerController]
@@ -304,6 +306,15 @@ class DataSource {
   final String? clearKey;
 
   final String? videoExtension;
+
+  /// **Android only**. Upper bound on adaptive (HLS/DASH) video width. When
+  /// set together with [maxVideoHeight], renditions larger than this are
+  /// excluded from track selection before playback starts. Null = no cap.
+  final int? maxVideoWidth;
+
+  /// **Android only**. Upper bound on adaptive (HLS/DASH) video height.
+  /// See [maxVideoWidth]. Null = no cap.
+  final int? maxVideoHeight;
 
   /// Key to compare DataSource
   String get key {

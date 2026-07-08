@@ -235,6 +235,8 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
         val key = getParameter(dataSource, KEY_PARAMETER, "")
         val headers: Map<String, String> = getParameter(dataSource, HEADERS_PARAMETER, HashMap())
         val overriddenDuration: Number = getParameter(dataSource, OVERRIDDEN_DURATION_PARAMETER, 0)
+        val maxVideoWidth: Number = getParameter(dataSource, MAX_VIDEO_WIDTH_PARAMETER, 0)
+        val maxVideoHeight: Number = getParameter(dataSource, MAX_VIDEO_HEIGHT_PARAMETER, 0)
         if (dataSource[ASSET_PARAMETER] != null) {
             val asset = getParameter(dataSource, ASSET_PARAMETER, "")
             val assetLookupKey: String = if (dataSource[PACKAGE_PARAMETER] != null) {
@@ -259,7 +261,9 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                 0L,
                 overriddenDuration.toLong(),
                 null,
-                null, null, null
+                null, null, null,
+                maxVideoWidth.toInt(),
+                maxVideoHeight.toInt()
             )
         } else {
             val useCache = getParameter(dataSource, USE_CACHE_PARAMETER, false)
@@ -289,7 +293,9 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                 licenseUrl,
                 drmHeaders,
                 cacheKey,
-                clearKey
+                clearKey,
+                maxVideoWidth.toInt(),
+                maxVideoHeight.toInt()
             )
         }
     }
@@ -507,6 +513,8 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
         private const val IMAGE_URL_PARAMETER = "imageUrl"
         private const val NOTIFICATION_CHANNEL_NAME_PARAMETER = "notificationChannelName"
         private const val OVERRIDDEN_DURATION_PARAMETER = "overriddenDuration"
+        private const val MAX_VIDEO_WIDTH_PARAMETER = "maxVideoWidth"
+        private const val MAX_VIDEO_HEIGHT_PARAMETER = "maxVideoHeight"
         private const val NAME_PARAMETER = "name"
         private const val INDEX_PARAMETER = "index"
         private const val LICENSE_URL_PARAMETER = "licenseUrl"

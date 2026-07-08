@@ -76,6 +76,17 @@ class BetterPlayerDataSource {
   ///platform.
   final BetterPlayerBufferingConfiguration bufferingConfiguration;
 
+  /// **Android only**. Upper bound on adaptive (HLS/DASH) video width. When set
+  /// together with [maxVideoHeight], renditions larger than this are excluded
+  /// from track selection before playback starts, so an oversized rendition is
+  /// never picked. This is a cap, not a fixed pick — adaptive bitrate still
+  /// switches freely among the remaining renditions. Null = no cap.
+  final int? maxVideoWidth;
+
+  ///**Android only**. Upper bound on adaptive (HLS/DASH) video height.
+  /// See [maxVideoWidth]. Null = no cap.
+  final int? maxVideoHeight;
+
   BetterPlayerDataSource(
     this.type,
     this.url, {
@@ -99,6 +110,8 @@ class BetterPlayerDataSource {
     this.drmConfiguration,
     this.placeholder,
     this.bufferingConfiguration = const BetterPlayerBufferingConfiguration(),
+    this.maxVideoWidth,
+    this.maxVideoHeight,
   }) : assert(
             (type == BetterPlayerDataSourceType.network ||
                     type == BetterPlayerDataSourceType.file) ||
@@ -227,6 +240,8 @@ class BetterPlayerDataSource {
     Widget? placeholder,
     BetterPlayerBufferingConfiguration? bufferingConfiguration =
         const BetterPlayerBufferingConfiguration(),
+    int? maxVideoWidth,
+    int? maxVideoHeight,
   }) {
     return BetterPlayerDataSource(
       type ?? this.type,
@@ -249,6 +264,8 @@ class BetterPlayerDataSource {
       placeholder: placeholder ?? this.placeholder,
       bufferingConfiguration:
           bufferingConfiguration ?? this.bufferingConfiguration,
+      maxVideoWidth: maxVideoWidth ?? this.maxVideoWidth,
+      maxVideoHeight: maxVideoHeight ?? this.maxVideoHeight,
     );
   }
 }

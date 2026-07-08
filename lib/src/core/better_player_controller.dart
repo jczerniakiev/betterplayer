@@ -475,6 +475,8 @@ class BetterPlayerController {
               _betterPlayerDataSource?.notificationConfiguration?.activityName,
           clearKey: _betterPlayerDataSource?.drmConfiguration?.clearKey,
           videoExtension: _betterPlayerDataSource!.videoExtension,
+          maxVideoWidth: _betterPlayerDataSource!.maxVideoWidth,
+          maxVideoHeight: _betterPlayerDataSource!.maxVideoHeight,
         );
 
         break;

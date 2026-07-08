@@ -53,6 +53,9 @@ class _HlsSubtitlesPageState extends State<HlsSubtitlesPage> {
       BetterPlayerDataSourceType.network,
       Constants.hlsWithSubtitles,
       useAsmsSubtitles: true,
+      // testing res cap
+      maxVideoWidth: 1920,
+      maxVideoHeight: 1080,
     );
     _betterPlayerController = BetterPlayerController(betterPlayerConfiguration);
     _betterPlayerController.setupDataSource(dataSource);
