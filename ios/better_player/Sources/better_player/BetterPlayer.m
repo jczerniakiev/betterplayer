@@ -242,6 +242,12 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
     _playerRate = 1;
     [_player replaceCurrentItemWithPlayerItem:item];
 
+    if (@available(iOS 11.0, *)) {
+        if (_maxVideoWidth != 0 && _maxVideoHeight != 0) {
+            item.preferredMaximumResolution = CGSizeMake(_maxVideoWidth, _maxVideoHeight);
+        }
+    }
+
     AVAsset* asset = [item asset];
     void (^assetCompletionHandler)(void) = ^{
         if ([asset statusOfValueForKey:@"tracks" error:nil] == AVKeyValueStatusLoaded) {
@@ -586,7 +592,11 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
     _player.currentItem.preferredPeakBitRate = bitrate;
     if (@available(iOS 11.0, *)) {
         if (width == 0 && height == 0){
-            _player.currentItem.preferredMaximumResolution = CGSizeZero;
+            if (_maxVideoWidth != 0 && _maxVideoHeight != 0) {
+                _player.currentItem.preferredMaximumResolution = CGSizeMake(_maxVideoWidth, _maxVideoHeight);
+            } else {
+                _player.currentItem.preferredMaximumResolution = CGSizeZero;
+            }
         } else {
             _player.currentItem.preferredMaximumResolution = CGSizeMake(width, height);
         }
