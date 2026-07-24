@@ -444,6 +444,13 @@ class BetterPlayerController {
 
   ///Internal method which invokes videoPlayerController source setup.
   Future _setupDataSource(BetterPlayerDataSource betterPlayerDataSource) async {
+    final setNativeSubtitles = videoPlayerController?.setNativeSubtitlesEnabled(
+      betterPlayerConfiguration.subtitlesConfiguration.nativeSubtitlesEnabled,
+    );
+    if (setNativeSubtitles != null) {
+      unawaited(setNativeSubtitles);
+    }
+
     switch (betterPlayerDataSource.type) {
       case BetterPlayerDataSourceType.network:
         await videoPlayerController?.setNetworkDataSource(

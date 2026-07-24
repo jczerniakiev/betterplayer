@@ -272,6 +272,17 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
   }
 
   @override
+  Future<void> setNativeSubtitlesEnabled(int? textureId, bool enabled) {
+    return _channel.invokeMethod<void>(
+      'setNativeSubtitlesEnabled',
+      <String, dynamic>{
+        'textureId': textureId,
+        'enabled': enabled,
+      },
+    );
+  }
+
+  @override
   Future<void> setMixWithOthers(int? textureId, bool mixWithOthers) {
     return _channel.invokeMethod<void>(
       'setMixWithOthers',

@@ -42,6 +42,14 @@ class BetterPlayerSubtitlesConfiguration {
   ///them twice.
   final bool enabled;
 
+  ///iOS only. Whether the native player may render the subtitle/closed caption
+  ///tracks of the video itself. Off by default, because on iOS the video is
+  ///rendered by an AVPlayerLayer, which renders those tracks whenever the
+  ///"Closed Captions + SDH" accessibility setting is on - drawing them on top
+  ///of the ones drawn by better_player. Set to true to get back the system
+  ///behaviour, e.g. when [enabled] is false and no custom overlay draws them.
+  final bool nativeSubtitlesEnabled;
+
   const BetterPlayerSubtitlesConfiguration({
     this.fontSize = 14,
     this.fontColor = Colors.white,
@@ -55,5 +63,6 @@ class BetterPlayerSubtitlesConfiguration {
     this.alignment = Alignment.center,
     this.backgroundColor = Colors.transparent,
     this.enabled = true,
+    this.nativeSubtitlesEnabled = false,
   });
 }

@@ -430,6 +430,9 @@ bool _remoteCommandsInitialized = false;
             NSString* name = argsMap[@"name"];
             int index = [argsMap[@"index"] intValue];
             [player setAudioTrack:name index: index];
+        } else if ([@"setNativeSubtitlesEnabled" isEqualToString:call.method]){
+            [player setNativeSubtitlesEnabled:[argsMap[@"enabled"] boolValue]];
+            result(nil);
         } else if ([@"setMixWithOthers" isEqualToString:call.method]){
             [player setMixWithOthers:[argsMap[@"mixWithOthers"] boolValue]];
         } else if ([@"preCache" isEqualToString:call.method]){

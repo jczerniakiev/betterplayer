@@ -37,6 +37,7 @@ AVPictureInPictureController *_pipController;
         _player.automaticallyWaitsToMinimizeStalling = false;
     }
     self._observersAdded = false;
+    _nativeSubtitlesEnabled = NO;
     return self;
 }
 
@@ -241,6 +242,7 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
     _isStalledCheckStarted = false;
     _playerRate = 1;
     [_player replaceCurrentItemWithPlayerItem:item];
+    [self applyNativeSubtitlesPreference:item];
 
     if (@available(iOS 11.0, *)) {
         if (_maxVideoWidth != 0 && _maxVideoHeight != 0) {
@@ -727,6 +729,52 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 
     }
 
+}
+
+/// Controls whether AVPlayer is allowed to render the legible (subtitle/closed
+/// caption) tracks of the current item on its own.
+///
+/// better_player draws subtitles itself, but on iOS the video is rendered by an
+/// AVPlayerLayer (see BetterPlayerView), which also renders legible tracks. By
+/// default AVPlayer selects a legible option automatically, and that automatic
+/// selection follows the MediaAccessibility preferences - so with the
+/// "Closed Captions + SDH" accessibility setting turned on the captions of an
+/// HLS stream get drawn on top of the ones drawn by better_player.
+- (void)setNativeSubtitlesEnabled:(BOOL)enabled {
+    _nativeSubtitlesEnabled = enabled;
+    AVPlayerItem* item = [_player currentItem];
+    if (item) {
+        [self applyNativeSubtitlesPreference:item];
+    }
+}
+
+- (void)applyNativeSubtitlesPreference:(AVPlayerItem*)item {
+    if (_nativeSubtitlesEnabled) {
+        item.appliesMediaSelectionCriteriaAutomatically = YES;
+        return;
+    }
+
+    item.appliesMediaSelectionCriteriaAutomatically = NO;
+
+    // For HLS the media selection groups are not known until the asset is
+    // loaded, so deselecting has to wait for it.
+    AVAsset* asset = item.asset;
+    NSString* mediaSelectionKey = @"availableMediaCharacteristicsWithMediaSelectionOptions";
+    [asset loadValuesAsynchronouslyForKeys:@[mediaSelectionKey] completionHandler:^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (self->_disposed || self->_nativeSubtitlesEnabled) {
+                return;
+            }
+            if ([asset statusOfValueForKey:mediaSelectionKey error:nil] != AVKeyValueStatusLoaded) {
+                return;
+            }
+            AVMediaSelectionGroup* legibleGroup =
+            [asset mediaSelectionGroupForMediaCharacteristic:AVMediaCharacteristicLegible];
+            if (legibleGroup) {
+                [item selectMediaOption:nil inMediaSelectionGroup:legibleGroup];
+            }
+        });
+    }];
 }
 
 - (void)setMixWithOthers:(bool)mixWithOthers {
