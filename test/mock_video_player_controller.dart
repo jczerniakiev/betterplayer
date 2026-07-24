@@ -74,5 +74,7 @@ class MockVideoPlayerController extends VideoPlayerController {
     String? activityName,
     String? clearKey,
     String? videoExtension,
+    int? maxVideoWidth,
+    int? maxVideoHeight,
   }) async {}
 }
