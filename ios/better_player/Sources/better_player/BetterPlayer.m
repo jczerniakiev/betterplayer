@@ -750,11 +750,11 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 
 - (void)applyNativeSubtitlesPreference:(AVPlayerItem*)item {
     if (_nativeSubtitlesEnabled) {
-        item.appliesMediaSelectionCriteriaAutomatically = YES;
+        _player.appliesMediaSelectionCriteriaAutomatically = YES;
         return;
     }
 
-    item.appliesMediaSelectionCriteriaAutomatically = NO;
+    _player.appliesMediaSelectionCriteriaAutomatically = NO;
 
     // For HLS the media selection groups are not known until the asset is
     // loaded, so deselecting has to wait for it.
