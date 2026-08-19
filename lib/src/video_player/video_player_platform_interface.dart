@@ -163,6 +163,12 @@ abstract class VideoPlayerPlatform {
     throw UnimplementedError('setMixWithOthers() has not been implemented.');
   }
 
+  /// iOS only. See [VideoPlayerController.setNativeSubtitlesEnabled].
+  Future<void> setNativeSubtitlesEnabled(int? textureId, bool enabled) {
+    throw UnimplementedError(
+        'setNativeSubtitlesEnabled() has not been implemented.');
+  }
+
   Future<void> clearCache() {
     throw UnimplementedError('clearCache() has not been implemented.');
   }

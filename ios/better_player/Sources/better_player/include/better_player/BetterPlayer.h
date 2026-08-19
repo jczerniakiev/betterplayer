@@ -34,6 +34,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic) bool isStalledCheckStarted;
 @property(nonatomic) float playerRate;
 @property(nonatomic) int overriddenDuration;
+@property(nonatomic) int maxVideoWidth;
+@property(nonatomic) int maxVideoHeight;
+@property(nonatomic) BOOL nativeSubtitlesEnabled;
 @property(nonatomic) AVPlayerTimeControlStatus lastAvPlayerTimeControlStatus;
 - (void)play;
 - (void)pause;
@@ -50,6 +53,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setVolume:(double)volume;
 - (void)setSpeed:(double)speed result:(FlutterResult)result;
 - (void) setAudioTrack:(NSString*) name index:(int) index;
+- (void)setNativeSubtitlesEnabled:(BOOL)enabled;
 - (void)setTrackParameters:(int) width: (int) height: (int)bitrate;
 - (void) enablePictureInPicture: (CGRect) frame;
 - (void)setPictureInPicture:(BOOL)pictureInPicture;

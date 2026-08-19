@@ -625,6 +625,23 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     _videoPlayerPlatform.setAudioTrack(_textureId, name, index);
   }
 
+  /// iOS only. Controls whether the native player is allowed to render the
+  /// subtitle/closed caption tracks of the video on its own.
+  ///
+  /// On iOS the video is rendered by an AVPlayerLayer, which renders those
+  /// tracks too, and does so whenever the "Closed Captions + SDH" accessibility
+  /// setting is on - resulting in captions drawn twice, once by the system and
+  /// once by better_player. Disabled by default, see
+  /// [BetterPlayerSubtitlesConfiguration.nativeSubtitlesEnabled].
+  Future<void> setNativeSubtitlesEnabled(bool enabled) async {
+    if (!Platform.isIOS || _isDisposed) {
+      return;
+    }
+    if (!_creatingCompleter.isCompleted) await _creatingCompleter.future;
+
+    return _videoPlayerPlatform.setNativeSubtitlesEnabled(_textureId, enabled);
+  }
+
   void setMixWithOthers(bool mixWithOthers) {
     _videoPlayerPlatform.setMixWithOthers(_textureId, mixWithOthers);
   }

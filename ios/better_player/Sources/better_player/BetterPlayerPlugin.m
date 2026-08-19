@@ -320,6 +320,12 @@ bool _remoteCommandsInitialized = false;
                 overriddenDuration = [dataSource[@"overriddenDuration"] intValue];
             }
 
+            // Optional adaptive video size cap
+            id maxVideoWidthObject = [dataSource objectForKey:@"maxVideoWidth"];
+            player.maxVideoWidth = (maxVideoWidthObject != [NSNull null]) ? [maxVideoWidthObject intValue] : 0;
+            id maxVideoHeightObject = [dataSource objectForKey:@"maxVideoHeight"];
+            player.maxVideoHeight = (maxVideoHeightObject != [NSNull null]) ? [maxVideoHeightObject intValue] : 0;
+
             BOOL useCache = false;
             id useCacheObject = [dataSource objectForKey:@"useCache"];
             if (useCacheObject != [NSNull null]) {
@@ -424,6 +430,9 @@ bool _remoteCommandsInitialized = false;
             NSString* name = argsMap[@"name"];
             int index = [argsMap[@"index"] intValue];
             [player setAudioTrack:name index: index];
+        } else if ([@"setNativeSubtitlesEnabled" isEqualToString:call.method]){
+            [player setNativeSubtitlesEnabled:[argsMap[@"enabled"] boolValue]];
+            result(nil);
         } else if ([@"setMixWithOthers" isEqualToString:call.method]){
             [player setMixWithOthers:[argsMap[@"mixWithOthers"] boolValue]];
         } else if ([@"preCache" isEqualToString:call.method]){
