@@ -27,7 +27,12 @@ rootProject.allprojects {
 }
 
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
+
+// Built-in Kotlin: Flutter's Gradle plugin applies the Kotlin plugin for us (required on AGP 9+,
+// where a plugin applying KGP itself breaks the build). Older toolchains still need it here.
+if (project.extensions.findByName('kotlin') == null) {
+    project.pluginManager.apply('kotlin-android')
+}
 
 android {
     compileSdkVersion 36
@@ -36,10 +41,6 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = '17'
     }
 
     sourceSets {
@@ -64,6 +65,12 @@ android {
         implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycleVersion"
         implementation "androidx.annotation:annotation:$annotationVersion"
         implementation "androidx.work:work-runtime:$workVersion"
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
 
