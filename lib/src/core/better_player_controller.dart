@@ -219,7 +219,18 @@ class BetterPlayerController {
         betterPlayerConfiguration.controlsConfiguration;
     _eventListeners.add(eventListener);
     if (betterPlayerDataSource != null) {
-      setupDataSource(betterPlayerDataSource);
+      setupDataSource(betterPlayerDataSource).catchError((dynamic error) {
+        if (videoPlayerController?.value.hasError ?? false) {
+          return;
+        }
+
+        _postEvent(
+          BetterPlayerEvent(
+            BetterPlayerEventType.exception,
+            parameters: <String, dynamic>{"exception": error.toString()},
+          ),
+        );
+      });
     }
   }
 
@@ -762,6 +773,23 @@ class BetterPlayerController {
     _postEvent(betterPlayerEvent);
   }
 
+  ///Reports an error thrown by a data source setup that nothing awaited.
+  ///Such an error would otherwise escape to the root zone as an unhandled
+  ///async error. Errors that reached the video player through the event
+  ///channel already surfaced as an exception event, so they are skipped.
+  void postSetupDataSourceError(dynamic error) {
+    if (videoPlayerController?.value.hasError ?? false) {
+      return;
+    }
+
+    _postEvent(
+      BetterPlayerEvent(
+        BetterPlayerEventType.exception,
+        parameters: <String, dynamic>{"exception": error.toString()},
+      ),
+    );
+  }
+
   ///Send player event to all listeners.
   void _postEvent(BetterPlayerEvent betterPlayerEvent) {
     for (final Function(BetterPlayerEvent)? eventListener in _eventListeners) {
@@ -968,18 +996,25 @@ class BetterPlayerController {
     if (videoPlayerController == null) {
       throw StateError("The data source has not been initialized");
     }
-    final position = await videoPlayerController!.position;
-    final wasPlayingBeforeChange = isPlaying()!;
-    pause();
-    await setupDataSource(betterPlayerDataSource!.copyWith(url: url));
-    seekTo(position!);
-    if (wasPlayingBeforeChange) {
-      play();
+    ///Fire and forget method, so nothing can catch what it throws. Leave the
+    ///player untouched on failure - seeking and resuming a source that never
+    ///loaded would only throw again.
+    try {
+      final position = await videoPlayerController!.position;
+      final wasPlayingBeforeChange = isPlaying()!;
+      pause();
+      await setupDataSource(betterPlayerDataSource!.copyWith(url: url));
+      seekTo(position!);
+      if (wasPlayingBeforeChange) {
+        play();
+      }
+      _postEvent(BetterPlayerEvent(
+        BetterPlayerEventType.changedResolution,
+        parameters: <String, dynamic>{"url": url},
+      ));
+    } catch (error) {
+      postSetupDataSourceError(error);
     }
-    _postEvent(BetterPlayerEvent(
-      BetterPlayerEventType.changedResolution,
-      parameters: <String, dynamic>{"url": url},
-    ));
   }
 
   ///Setup translations for given locale. In normal use cases it shouldn't be

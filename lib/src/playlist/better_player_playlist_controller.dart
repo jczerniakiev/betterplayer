@@ -76,7 +76,8 @@ class BetterPlayerPlaylistController {
     if (nextDataSourceId == -1) {
       return;
     }
-    if (_betterPlayerController!.isFullScreen && !betterPlayerPlaylistConfiguration.keepFullScreen) {
+    if (_betterPlayerController!.isFullScreen &&
+        !betterPlayerPlaylistConfiguration.keepFullScreen) {
       _betterPlayerController!.exitFullScreen();
     }
     _changingToNextVideo = true;
@@ -106,7 +107,22 @@ class BetterPlayerPlaylistController {
     if (index <= _dataSourceLength) {
       _currentDataSourceIndex = index;
       _betterPlayerController!
-          .setupDataSource(_betterPlayerDataSourceList[index]);
+          .setupDataSource(_betterPlayerDataSourceList[index])
+          .catchError((dynamic error) {
+        final alreadyReported =
+            _betterPlayerController!.videoPlayerController?.value.hasError ??
+                false;
+        if (alreadyReported) {
+          return;
+        }
+
+        _betterPlayerController!.postEvent(
+          BetterPlayerEvent(
+            BetterPlayerEventType.exception,
+            parameters: <String, dynamic>{"exception": error.toString()},
+          ),
+        );
+      });
     }
   }
 

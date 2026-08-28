@@ -734,7 +734,9 @@ class _BetterPlayerCupertinoControlsState
             if (_controlsConfiguration.enableRetry)
               TextButton(
                 onPressed: () {
-                  _betterPlayerController!.retryDataSource();
+                  _betterPlayerController!.retryDataSource().catchError(
+                        _betterPlayerController!.postSetupDataSourceError,
+                      );
                 },
                 child: Text(
                   _betterPlayerController!.translations.generalRetry,
