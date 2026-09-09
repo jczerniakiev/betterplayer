@@ -222,6 +222,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
           _applyPlayPause();
           break;
         case VideoEventType.completed:
+          _seekPosition = null;
           value = value.copyWith(isPlaying: false, position: value.duration);
           _timer?.cancel();
           break;
@@ -399,6 +400,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
       return;
     }
 
+    _seekPosition = null;
+
     value = VideoPlayerValue(
       duration: null,
       isLooping: value.isLooping,
@@ -482,7 +485,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
           if (_seekPosition != null && newPosition != null) {
             final difference =
                 newPosition.inMilliseconds - _seekPosition!.inMilliseconds;
-            if (difference > 0) {
+
+            if (difference >= 0) {
               _seekPosition = null;
             }
           }
