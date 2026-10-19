@@ -485,7 +485,11 @@ internal class BetterPlayer(
             }
 
             override fun onPlayerError(error: PlaybackException) {
-                eventSink.error("VideoError", "Video player had error $error", "")
+                eventSink.error(
+                    "VideoError",
+                    "Video player had error ${describePlaybackError(error)}",
+                    ""
+                )
             }
         })
         val reply: MutableMap<String, Any> = HashMap()
@@ -785,6 +789,42 @@ internal class BetterPlayer(
         // position for the two to be treated as the same seek when deciding
         // whether to suppress the "seek" event echo.
         private const val SEEK_EVENT_TOLERANCE_MS = 1000L
+
+        // Bounds for describePlaybackError: how many nested causes to walk and
+        // how long the resulting description may get.
+        private const val MAX_ERROR_CAUSE_DEPTH = 4
+        private const val MAX_ERROR_DESCRIPTION_LENGTH = 600
+
+        // PlaybackException.toString() in an R8-minified app reads
+        // "<obfuscated class>: Source error", which cannot tell a DNS failure
+        // from an HTTP 403 or a TLS error. Report the error code name and the
+        // cause chain instead: java.* class names survive minification, and
+        // InvalidResponseCodeException carries "Response code: N" in its message.
+        private fun describePlaybackError(error: PlaybackException): String {
+            // errorCodeName is a plain switch and cannot throw; everything after
+            // it calls getMessage()/toString() on arbitrary exceptions.
+            val description = StringBuilder("${error.errorCodeName} (${error.errorCode})")
+            try {
+                description.append(": ").append(error.message)
+                var cause = error.cause
+                var depth = 0
+                while (cause != null && depth < MAX_ERROR_CAUSE_DEPTH) {
+                    // A wrapping IOException's message is often its cause's
+                    // toString(), so skip text that is already in the description.
+                    val text = cause.toString()
+                    if (!description.contains(text)) {
+                        description.append("; caused by ").append(text)
+                    }
+                    cause = cause.cause
+                    depth++
+                }
+            } catch (e: Exception) {
+                // Keep whatever was collected: this runs on the main thread inside
+                // onPlayerError, so a throw here would crash the app.
+                Log.e(TAG, "Failed to describe playback error", e)
+            }
+            return description.take(MAX_ERROR_DESCRIPTION_LENGTH).toString()
+        }
 
         //Clear cache without accessing BetterPlayerCache.
         fun clearCache(context: Context?, result: MethodChannel.Result) {
